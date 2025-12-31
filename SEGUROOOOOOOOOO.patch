@@ -1,0 +1,152 @@
+Index: app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/AppDatabase_Impl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/AppDatabase_Impl.java b/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/AppDatabase_Impl.java
+--- a/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/AppDatabase_Impl.java
++++ b/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/AppDatabase_Impl.java	(date 1760037831023)
+@@ -37,9 +37,9 @@
+       @Override
+       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
+         db.execSQL("CREATE TABLE IF NOT EXISTS `profiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileName` TEXT NOT NULL, `serverUrl` TEXT NOT NULL, `username` TEXT NOT NULL, `password` TEXT NOT NULL)");
+-        db.execSQL("CREATE TABLE IF NOT EXISTS `playback_progress` (`contentId` TEXT NOT NULL, `profileId` INTEGER NOT NULL, `streamType` TEXT NOT NULL, `streamUrl` TEXT NOT NULL, `contentTitle` TEXT NOT NULL, `contentImageUrl` TEXT NOT NULL, `position` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `lastWatched` INTEGER NOT NULL, PRIMARY KEY(`contentId`))");
++        db.execSQL("CREATE TABLE IF NOT EXISTS `playback_progress` (`contentId` TEXT NOT NULL, `seriesId` INTEGER, `profileId` INTEGER NOT NULL, `streamType` TEXT NOT NULL, `streamUrl` TEXT NOT NULL, `contentTitle` TEXT NOT NULL, `contentImageUrl` TEXT NOT NULL, `position` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `lastWatched` INTEGER NOT NULL, PRIMARY KEY(`contentId`))");
+         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
+-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1745655737a4b0ab2ee8bcc7b52f462e')");
++        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8591073532e5370e68f29816c72030f6')");
+       }
+ 
+       @Override
+@@ -104,8 +104,9 @@
+                   + " Expected:\n" + _infoProfiles + "\n"
+                   + " Found:\n" + _existingProfiles);
+         }
+-        final HashMap<String, TableInfo.Column> _columnsPlaybackProgress = new HashMap<String, TableInfo.Column>(9);
++        final HashMap<String, TableInfo.Column> _columnsPlaybackProgress = new HashMap<String, TableInfo.Column>(10);
+         _columnsPlaybackProgress.put("contentId", new TableInfo.Column("contentId", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
++        _columnsPlaybackProgress.put("seriesId", new TableInfo.Column("seriesId", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+         _columnsPlaybackProgress.put("profileId", new TableInfo.Column("profileId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+         _columnsPlaybackProgress.put("streamType", new TableInfo.Column("streamType", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+         _columnsPlaybackProgress.put("streamUrl", new TableInfo.Column("streamUrl", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+@@ -125,7 +126,7 @@
+         }
+         return new RoomOpenHelper.ValidationResult(true, null);
+       }
+-    }, "1745655737a4b0ab2ee8bcc7b52f462e", "3cef93035dc2723e0184a00c90d8e6c5");
++    }, "8591073532e5370e68f29816c72030f6", "8c341d958d555c0e7526c219662db93d");
+     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
+     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
+     return _helper;
+Index: app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/PlaybackProgressDao_Impl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/PlaybackProgressDao_Impl.java b/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/PlaybackProgressDao_Impl.java
+--- a/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/PlaybackProgressDao_Impl.java
++++ b/app/build/generated/ksp/debug/java/com/zanini/gabizitaplayer/data/local/PlaybackProgressDao_Impl.java	(date 1760037830986)
+@@ -16,6 +16,7 @@
+ import com.zanini.gabizitaplayer.data.model.PlaybackProgress;
+ import java.lang.Class;
+ import java.lang.Exception;
++import java.lang.Integer;
+ import java.lang.Object;
+ import java.lang.Override;
+ import java.lang.String;
+@@ -43,21 +44,26 @@
+       @Override
+       @NonNull
+       protected String createQuery() {
+-        return "INSERT OR REPLACE INTO `playback_progress` (`contentId`,`profileId`,`streamType`,`streamUrl`,`contentTitle`,`contentImageUrl`,`position`,`duration`,`lastWatched`) VALUES (?,?,?,?,?,?,?,?,?)";
++        return "INSERT OR REPLACE INTO `playback_progress` (`contentId`,`seriesId`,`profileId`,`streamType`,`streamUrl`,`contentTitle`,`contentImageUrl`,`position`,`duration`,`lastWatched`) VALUES (?,?,?,?,?,?,?,?,?,?)";
+       }
+ 
+       @Override
+       protected void bind(@NonNull final SupportSQLiteStatement statement,
+           @NonNull final PlaybackProgress entity) {
+         statement.bindString(1, entity.getContentId());
+-        statement.bindLong(2, entity.getProfileId());
+-        statement.bindString(3, entity.getStreamType());
+-        statement.bindString(4, entity.getStreamUrl());
+-        statement.bindString(5, entity.getContentTitle());
+-        statement.bindString(6, entity.getContentImageUrl());
+-        statement.bindLong(7, entity.getPosition());
+-        statement.bindLong(8, entity.getDuration());
+-        statement.bindLong(9, entity.getLastWatched());
++        if (entity.getSeriesId() == null) {
++          statement.bindNull(2);
++        } else {
++          statement.bindLong(2, entity.getSeriesId());
++        }
++        statement.bindLong(3, entity.getProfileId());
++        statement.bindString(4, entity.getStreamType());
++        statement.bindString(5, entity.getStreamUrl());
++        statement.bindString(6, entity.getContentTitle());
++        statement.bindString(7, entity.getContentImageUrl());
++        statement.bindLong(8, entity.getPosition());
++        statement.bindLong(9, entity.getDuration());
++        statement.bindLong(10, entity.getLastWatched());
+       }
+     };
+     this.__preparedStmtOfDeleteProgress = new SharedSQLiteStatement(__db) {
+@@ -134,6 +140,7 @@
+         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+         try {
+           final int _cursorIndexOfContentId = CursorUtil.getColumnIndexOrThrow(_cursor, "contentId");
++          final int _cursorIndexOfSeriesId = CursorUtil.getColumnIndexOrThrow(_cursor, "seriesId");
+           final int _cursorIndexOfProfileId = CursorUtil.getColumnIndexOrThrow(_cursor, "profileId");
+           final int _cursorIndexOfStreamType = CursorUtil.getColumnIndexOrThrow(_cursor, "streamType");
+           final int _cursorIndexOfStreamUrl = CursorUtil.getColumnIndexOrThrow(_cursor, "streamUrl");
+@@ -146,6 +153,12 @@
+           if (_cursor.moveToFirst()) {
+             final String _tmpContentId;
+             _tmpContentId = _cursor.getString(_cursorIndexOfContentId);
++            final Integer _tmpSeriesId;
++            if (_cursor.isNull(_cursorIndexOfSeriesId)) {
++              _tmpSeriesId = null;
++            } else {
++              _tmpSeriesId = _cursor.getInt(_cursorIndexOfSeriesId);
++            }
+             final int _tmpProfileId;
+             _tmpProfileId = _cursor.getInt(_cursorIndexOfProfileId);
+             final String _tmpStreamType;
+@@ -162,7 +175,7 @@
+             _tmpDuration = _cursor.getLong(_cursorIndexOfDuration);
+             final long _tmpLastWatched;
+             _tmpLastWatched = _cursor.getLong(_cursorIndexOfLastWatched);
+-            _result = new PlaybackProgress(_tmpContentId,_tmpProfileId,_tmpStreamType,_tmpStreamUrl,_tmpContentTitle,_tmpContentImageUrl,_tmpPosition,_tmpDuration,_tmpLastWatched);
++            _result = new PlaybackProgress(_tmpContentId,_tmpSeriesId,_tmpProfileId,_tmpStreamType,_tmpStreamUrl,_tmpContentTitle,_tmpContentImageUrl,_tmpPosition,_tmpDuration,_tmpLastWatched);
+           } else {
+             _result = null;
+           }
+@@ -188,6 +201,7 @@
+         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+         try {
+           final int _cursorIndexOfContentId = CursorUtil.getColumnIndexOrThrow(_cursor, "contentId");
++          final int _cursorIndexOfSeriesId = CursorUtil.getColumnIndexOrThrow(_cursor, "seriesId");
+           final int _cursorIndexOfProfileId = CursorUtil.getColumnIndexOrThrow(_cursor, "profileId");
+           final int _cursorIndexOfStreamType = CursorUtil.getColumnIndexOrThrow(_cursor, "streamType");
+           final int _cursorIndexOfStreamUrl = CursorUtil.getColumnIndexOrThrow(_cursor, "streamUrl");
+@@ -201,6 +215,12 @@
+             final PlaybackProgress _item;
+             final String _tmpContentId;
+             _tmpContentId = _cursor.getString(_cursorIndexOfContentId);
++            final Integer _tmpSeriesId;
++            if (_cursor.isNull(_cursorIndexOfSeriesId)) {
++              _tmpSeriesId = null;
++            } else {
++              _tmpSeriesId = _cursor.getInt(_cursorIndexOfSeriesId);
++            }
+             final int _tmpProfileId;
+             _tmpProfileId = _cursor.getInt(_cursorIndexOfProfileId);
+             final String _tmpStreamType;
+@@ -217,7 +237,7 @@
+             _tmpDuration = _cursor.getLong(_cursorIndexOfDuration);
+             final long _tmpLastWatched;
+             _tmpLastWatched = _cursor.getLong(_cursorIndexOfLastWatched);
+-            _item = new PlaybackProgress(_tmpContentId,_tmpProfileId,_tmpStreamType,_tmpStreamUrl,_tmpContentTitle,_tmpContentImageUrl,_tmpPosition,_tmpDuration,_tmpLastWatched);
++            _item = new PlaybackProgress(_tmpContentId,_tmpSeriesId,_tmpProfileId,_tmpStreamType,_tmpStreamUrl,_tmpContentTitle,_tmpContentImageUrl,_tmpPosition,_tmpDuration,_tmpLastWatched);
+             _result.add(_item);
+           }
+           return _result;

@@ -1,0 +1,64 @@
+Index: app/src/main/java/com/zanini/gabizitaplayer/ui/continue_watching/ContinueWatchingActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/zanini/gabizitaplayer/ui/continue_watching/ContinueWatchingActivity.kt b/app/src/main/java/com/zanini/gabizitaplayer/ui/continue_watching/ContinueWatchingActivity.kt
+--- a/app/src/main/java/com/zanini/gabizitaplayer/ui/continue_watching/ContinueWatchingActivity.kt	(date 1760038265003)
++++ b/app/src/main/java/com/zanini/gabizitaplayer/ui/continue_watching/ContinueWatchingActivity.kt
+@@ -3,7 +3,6 @@
+ 
+ import android.content.Intent
+ import android.os.Bundle
+-import androidx.appcompat.app.AlertDialog
+ import androidx.appcompat.widget.Toolbar
+ import androidx.lifecycle.ViewModelProvider
+ import androidx.recyclerview.widget.LinearLayoutManager
+@@ -39,40 +38,26 @@
+ 
+     private fun setupRecyclerView() {
+         recyclerView = findViewById(R.id.recycler_view_continue_watching)
+-        sectionAdapter = ContinueWatchingSectionAdapter(
+-            onPlaybackItemClicked = { item ->
+-                launchPlayer(item)
+-            },
+-            onPlaybackItemLongClicked = { item ->
+-                showDeleteConfirmationDialog(item)
+-            }
+-        )
++        sectionAdapter = ContinueWatchingSectionAdapter { item ->
++            launchPlayer(item)
++        }
++        // O layout agora é linear vertical para empilhar as seções
+         recyclerView.layoutManager = LinearLayoutManager(this)
+         recyclerView.adapter = sectionAdapter
+     }
+ 
+     private fun observeViewModel() {
++        // Observa as seções prontas da ViewModel
+         viewModel.sections.observe(this) { sections ->
+             sectionAdapter.submitList(sections)
+         }
+     }
+ 
+-    private fun showDeleteConfirmationDialog(item: PlaybackProgress) {
+-        AlertDialog.Builder(this)
+-            .setTitle("Remover da Lista")
+-            .setMessage("Deseja remover '${item.contentTitle}' da sua lista de 'Continuar Assistindo'?")
+-            .setPositiveButton("Sim") { _, _ ->
+-                viewModel.delete(item)
+-            }
+-            .setNegativeButton("Não", null)
+-            .show()
+-    }
+-
+     private fun launchPlayer(item: PlaybackProgress) {
+         val intent = Intent(this, PlayerActivity::class.java).apply {
++            // Passa o seriesId se for uma série, para a lógica de "próximo episódio"
+             if (item.streamType == "series") {
+-                // CORREÇÃO: Usar o seriesId do item de progresso
+-                putExtra("SERIES_ID", item.seriesId ?: 0)
++                putExtra("SERIES_ID", item.contentId.substringBefore("_").toIntOrNull() ?: 0)
+             }
+             putExtra("CONTENT_ID", item.contentId)
+             putExtra("STREAM_TYPE", item.streamType)
